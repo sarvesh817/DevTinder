@@ -3,6 +3,9 @@ const express=require("express");
 const app=express();
 
 const {adminAuth}=require("../middlewares/auth");
+
+
+
 //Note - for apply all admin routes  
 //app.use("/hello",adminAuth);  
 app.use("/hello/2",(req,res,next)=>{
@@ -14,17 +17,27 @@ app.use("/hello/2",(req,res,next)=>{
 });
 
 app.use("/hello",adminAuth,(req,res)=>{  
+    throw new Error("ss");
     res.send("hello hello hello");       
 }); 
 
-app.use("/test",(req,res)=>{        
-    res.send("test routes ");      
-}); 
+//Error Handlers  by below way && by usig try catch  
+app.use("/",(err,req,res,next)=>{
+    if(err){  
+        res.status(500).send("Something went wrong");
+    }
+    //next(); 
+});   
+
+ 
 
 //if hit requrest like /xyz then below code still works bcz -wildcard slach so   
 app.use("/",(req,res)=>{   
     res.send("slash routes ");      
 });    
+
+
+
 
 app.listen(3000,() => {
     console.log("server is running on the port 3000");     
