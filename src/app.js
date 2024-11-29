@@ -2,16 +2,22 @@
 const express=require("express");
 const app=express();
 
-
-app.use("/hello/2",(req,res)=>{
-    res.send("hello 2 2");         
+const {adminAuth}=require("../middlewares/auth");
+//Note - for apply all admin routes  
+//app.use("/hello",adminAuth);  
+app.use("/hello/2",(req,res,next)=>{
+  //res.send("hello 2");           
+  next();
+},
+(req,res)=>{
+    res.send("this is the part - route handler");               
 });
 
-app.use("/hello",(req,res)=>{
-    res.send("hello hello hello");      
-});
+app.use("/hello",adminAuth,(req,res)=>{  
+    res.send("hello hello hello");       
+}); 
 
-app.use("/test",(req,res)=>{      
+app.use("/test",(req,res)=>{        
     res.send("test routes ");      
 }); 
 
@@ -23,9 +29,15 @@ app.use("/",(req,res)=>{
 app.listen(3000,() => {
     console.log("server is running on the port 3000");     
 });
+ 
+
+//part 2 - Advanced routing - ?,+,*,(bc)group  or regex
+//Dynamic routing  - :  e.g /user/:userID and getting userID by req.params  //for get userID      
 
 
 //NOTE:-order of code it is matter imp. 
+//app.get("/users")  //this will only handle GET requests
+//app.use("/users")  //this will match all the HTTP METHODS -GET,POST,PUT,Delete  
 //revise to run above example if any confusion.   
 
 

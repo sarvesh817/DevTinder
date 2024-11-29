@@ -11,3 +11,6 @@ Describe the use of the -g option with npm install
 Explain the difference between caret (^) and tilde (~) in package.json  
 
 //Note- all are done. 
+
+app.use() vs app.all()
+ 
