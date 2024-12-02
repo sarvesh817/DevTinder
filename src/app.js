@@ -82,10 +82,27 @@ app.get("/getUser", async (req, res) => {
 
 
 //Update User Record
-app.patch("/updUser",async(req,res)=>{
+app.patch("/updUser/:userId",async(req,res)=>{
     try {
-        const userId=req.body.userId;
+        //params write bcz by query sting id is getting so  
+        const userId=req.params.userId; 
         const data=req.body; 
+
+        //API LEVEL VALIDATION
+        const allowd_updates=["skills","about","gender","age"];
+        const isUpdateAllowed=Object.keys(data).every((k)=>
+            allowd_updates.includes(k)
+        );
+        if(!isUpdateAllowed){
+            throw new Error("Update Not Allowed");    
+        }
+
+        if (data.skills && data.skills.length > 10) { 
+            throw new Error("Skills can't be more than 10"); 
+        }
+
+
+        
         const updUser=await User.findByIdAndUpdate({_id:userId},data,{
               returnDocument:"after",
               runValidators:true,  
