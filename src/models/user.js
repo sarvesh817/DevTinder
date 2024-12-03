@@ -1,4 +1,8 @@
 const mongoose=require("mongoose");
+var validator=require("validator");
+
+
+//SCHEMA level Validation        
 
 const userSchema=new mongoose.Schema({
     firstName:{
@@ -18,10 +22,21 @@ const userSchema=new mongoose.Schema({
         required:true,
         unique:true, 
         //for remove white space  otherwise same email id will enter with space then it will treated as uniq email id so always use trim. 
-        trim:true    
+        trim:true,
+        validate(value){
+            if(!validator.isEmail(value)){
+                throw new Error("Invalid Email ID"); 
+            }
+        }
+        
     },
     password:{ 
-        type:String  
+        type:String,
+        validate(value){
+            if(!validator.isStrongPassword(value)){
+                throw new Error("Please Enter Strong Password");      
+            }
+        }  
     },
     age:{
         type:Number 
@@ -48,7 +63,7 @@ const userSchema=new mongoose.Schema({
 { 
     //by write below timestamps true - now mongodb will enter each document with created and updated data time bydefault automatically.   
     timestamps:true }
-);      
+);        
 
 
 const User=mongoose.model("User",userSchema);
