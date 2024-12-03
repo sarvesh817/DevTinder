@@ -5,7 +5,8 @@ const app=express();
 const {adminAuth}=require("../middlewares/auth");
 const connectDB=require("./config/database");
 const User=require("./models/user"); 
-
+const validationSignupData=require("./utils/validation");
+const bcrypt=require("bcrypt"); 
 app.use(express.json());
 
 //Note - for apply all admin routes  
@@ -19,7 +20,6 @@ app.use("/hello/2",(req,res,next)=>{
 });
 
 app.use("/hello",adminAuth,(req,res)=>{  
-    throw new Error("ss");
     res.send("hello hello hello");       
 }); 
 
@@ -54,8 +54,16 @@ connectDB()
  //Crud API
  app.post("/signup",async(req,res)=>{
     try{
-        //Creating a new instance of userModel
-        const user=new User(req.body);
+        //Validation of the data
+        validationSignupData(req);                
+
+        //Password Encrypted
+        const {firstName,lastName,emailId,password}=req.body;  
+        const passwordHash=await bcrypt.hash(password,10);   
+        const data={ firstName,lastName,emailId,password: passwordHash };     
+
+        //Creating a new instance of userModel    
+        const user=new User(data);     
         const userData=await user.save();
         if(userData){   
             res.status(200).json({message:"UserData Insertion Successfully ",userData});   
@@ -68,6 +76,60 @@ connectDB()
 
     }
  });
+
+ app.post("/login1",async(req,res)=>{ 
+    try {
+        const {emailId,password}=req.body; 
+         // Check if emailId and password are provided
+         if (!emailId || !password) {
+            throw new Error("Email and password are required"); 
+        }
+        const exitsUser=await User.findOne({emailId});
+        if(!exitsUser){
+            throw new Error("Invalid Credentials");
+        }
+        const isPasswordValid=await bcrypt.compare(password,exitsUser.password); 
+        if(isPasswordValid){
+            res.status(200).json({message: "Login successfully"});
+        }else{
+            res.status(401).json({message: "Invalid Credentials"});     
+        }
+    } catch (error) {
+        res.status(500).json({message: "Login Failed",error: error.message});
+    }
+ });
+
+ app.post("/login", async (req, res) => { 
+    try {
+        const { emailId, password } = req.body;
+
+        // Check if emailId and password are provided
+        if (!emailId || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        // Find user by emailId
+        const existingUser = await User.findOne({ emailId });
+        if (!existingUser) {
+            return res.status(401).json({success: false, message: "Invalid credentials" });   
+        }
+
+        // Compare password
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password); 
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Login successful
+        res.status(200).json({ success: true,  message: "Login successfully",data: {
+            userId: existingUser._id,
+            emailId: existingUser.emailId
+        } });
+    } catch (error) {
+        res.status(500).json({success: false, message: "Login Failed", error: error.message });
+    }
+});  
+
 
 // Fetch User Records
 app.get("/getUser", async (req, res) => {

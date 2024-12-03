@@ -20,7 +20,7 @@ const userSchema=new mongoose.Schema({
         //for lowercase
         lowercase:true,  
         required:true,
-        unique:true, 
+        unique: [true, "This email is already registered"],  
         //for remove white space  otherwise same email id will enter with space then it will treated as uniq email id so always use trim. 
         trim:true,
         validate(value){
@@ -67,5 +67,6 @@ const userSchema=new mongoose.Schema({
 
 
 const User=mongoose.model("User",userSchema);
+
 module.exports=User;  
   
