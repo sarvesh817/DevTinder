@@ -1,13 +1,39 @@
 //below is middleware example      
+const jwt=require("jsonwebtoken");
+const User=require("../src/models/user");  
 
-const adminAuth=(req,res,next) => {
-    console.log("Admin auth is getting checked");
-    const token="xyz";
-    if(token==="xyz"){
-       next(); 
-    }else{
-        res.status(401).send("UN-Authorised Request");    
+ 
+
+
+//TOKEN AUTH 
+const userAuth=async(req,res,next)=>{   
+    try{
+        //Read the token from the req cookies
+        //validate the token
+        //Find the userName 
+
+        const {token}=req.cookies;
+        if(!token){
+            throw new Error("Token is not Valid!!!!!");
+        }
+        const decodeMsg=jwt.verify(token,"thisissamplecode");
+        const {_id}=decodeMsg;
+        const userData=await User.findById(_id);     
+        if(!userData){
+            throw new Error("User doesn't Exists...");
+        }
+        req.user=userData;  
+        next();  
+
+    }catch(error){
+        res.status(400).send("Error : "+error.message);  
     }
+
 }
 
-module.exports={adminAuth};
+
+
+
+
+
+module.exports={userAuth};  

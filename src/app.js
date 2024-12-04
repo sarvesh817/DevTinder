@@ -2,12 +2,15 @@
 const express=require("express");
 const app=express();
 
-const {adminAuth}=require("../middlewares/auth");
+const {userAuth}=require("../middlewares/auth");
 const connectDB=require("./config/database");
 const User=require("./models/user"); 
 const validationSignupData=require("./utils/validation");
 const bcrypt=require("bcrypt"); 
+const cookieParser=require("cookie-parser");   
+const jwt=require("jsonwebtoken");   
 app.use(express.json());
+app.use(cookieParser());  
 
 //Note - for apply all admin routes  
 //app.use("/hello",adminAuth);   
@@ -19,7 +22,7 @@ app.use("/hello/2",(req,res,next)=>{
     res.send("this is the part - route handler");               
 });
 
-app.use("/hello",adminAuth,(req,res)=>{  
+app.use("/hello",(req,res)=>{  
     res.send("hello hello hello");       
 }); 
 
@@ -77,29 +80,7 @@ connectDB()
     }
  });
 
- app.post("/login1",async(req,res)=>{ 
-    try {
-        const {emailId,password}=req.body; 
-         // Check if emailId and password are provided
-         if (!emailId || !password) {
-            throw new Error("Email and password are required"); 
-        }
-        const exitsUser=await User.findOne({emailId});
-        if(!exitsUser){
-            throw new Error("Invalid Credentials");
-        }
-        const isPasswordValid=await bcrypt.compare(password,exitsUser.password); 
-        if(isPasswordValid){
-            res.status(200).json({message: "Login successfully"});
-        }else{
-            res.status(401).json({message: "Invalid Credentials"});     
-        }
-    } catch (error) {
-        res.status(500).json({message: "Login Failed",error: error.message});
-    }
- });
-
- app.post("/login", async (req, res) => { 
+  app.post("/login", async (req, res) => { 
     try {
         const { emailId, password } = req.body;
 
@@ -119,6 +100,10 @@ connectDB()
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
+        const token=await jwt.sign({_id:existingUser._id},"thisissamplecode",{expiresIn:"1d"});    
+
+
+        res.cookie('token',token);               
 
         // Login successful
         res.status(200).json({ success: true,  message: "Login successfully",data: {
@@ -130,6 +115,26 @@ connectDB()
     }
 });  
 
+//PROFILE API
+app.get("/profile",userAuth,async(req,res)=>{         
+    try{
+        const getUser=req.user;             
+        res.status(200).json({message: "Profile information fetched successfully",users: getUser});   
+    } catch (error) {
+        res.status(500).json({message: "Error occurred while fetching users",error: error.message});
+    } 
+});
+
+
+app.post("/sendConnectionRequest",userAuth,async(req,res)=>{  
+    try {
+        const getUser = await User.find(); 
+        res.status(200).json({message: "Users information fetched successfully",users: getUser});
+    } catch (error) {
+        res.status(500).json({message: "Error occurred while fetching users",error: error.message});
+    }
+
+})
 
 // Fetch User Records
 app.get("/getUser", async (req, res) => {
@@ -162,9 +167,6 @@ app.patch("/updUser/:userId",async(req,res)=>{
         if (data.skills && data.skills.length > 10) { 
             throw new Error("Skills can't be more than 10"); 
         }
-
-
-        
         const updUser=await User.findByIdAndUpdate({_id:userId},data,{
               returnDocument:"after",
               runValidators:true,  
@@ -191,6 +193,10 @@ app.delete("/delUser",async(req,res)=>{
         res.status(500).json({message: "Error occurred while fetching users",error: error.message});
     }
 });
+
+
+
+
 
 //part 2 - Advanced routing - ?,+,*,(bc)group  or regex
 //Dynamic routing  - :  e.g /user/:userID and getting userID by req.params  //for get userID      
