@@ -7,6 +7,8 @@ var validator=require("validator");
 const userSchema=new mongoose.Schema({
     firstName:{
         type:String,
+        //for apply indexing on mostly used fields just right - index:true     
+        index:true,
         //for required field
         required:true,
         minLength:3
@@ -43,6 +45,10 @@ const userSchema=new mongoose.Schema({
     },
     gender:{
         type:String,
+        enum:{
+            values:["male","female","others"],
+            message:`{VALUE} is not valid gender type`   
+        },
         //this is custom validation way---
         validate(value){
             if(!['male','female','others'].includes(value)){
