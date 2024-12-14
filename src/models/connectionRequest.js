@@ -3,6 +3,8 @@ const mongoose=require("mongoose");
 const connectionRequestSchema=new mongoose.Schema({
     fromUserId:{
         type:mongoose.Schema.Types.ObjectId,
+        //we are doing here like joining - by ref and populate   - it is reference from user table.  
+        ref:"User",
         required:true
     },
     toUserId:{
